@@ -21,14 +21,14 @@ for sex in possible_sex_values:
                 for hdl in possible_hdl_values:
                     for sbp in possible_sbp_values:
                         for med in possible_med_values:
-                            
+
                             try:
 # Male calculations
                                 if sex == 'M':
 
                                     if 20 <= age <= 34:
                                         out = -9
-
+                                        
                                         if cho < 160:
                                             out += 0
                                         elif 160 <= cho <= 199:

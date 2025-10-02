@@ -1,13 +1,19 @@
-import numpy as np
-import matplotlib.pyplot as plt
+expt_samples = []
 
-u = np.linspace(0, 2, 1000)
-v = np.linspace(0, 2, 1000)
-w = np.linspace(0, 2, 1000)
-u_mesh, v_mesh, w_mesh = np.meshgrid(u, v, w)
-
-x_mesh = u_mesh * (v_mesh ** 4) + (w_mesh ** 3)
-y_mesh = u_mesh + v_mesh * np.exp(w_mesh)
-
-z_mesh = (x_mesh ** 4) + x_mesh * (y_mesh ** 3)
-print(z_mesh)
+tokens = input().split()
+for token in tokens:
+    expt_samples.append(int(token))
+print("Original samples:", end=" ")
+for samples in expt_samples:
+    print(samples, end=" ")
+print()
+# start
+removed = [x for x in expt_samples if x >= 55]
+for r in removed:
+    print(f"{r} removed")
+expt_samples = [x for x in expt_samples if x < 55]
+# stop
+print("Filtered samples:", end=" ")
+for samples in expt_samples:
+    print(samples, end=" ")
+print()
