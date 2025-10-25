@@ -1,7 +1,14 @@
-mystr = 'Howdy'
-mylist = [1, 2, 3]
-mytuple = (mystr, mylist)
-print(mylist, mytuple)
-def print(var):
-    print(var)
-print(3)
+valid_password = False
+
+while valid_password == False:
+    try:
+        password = input()
+
+        if len(password) < 8:
+            raise ValueError("Invalid")
+
+        valid_password = True
+        print("Accepted")
+
+    except ValueError as excpt:
+        print(f"Error: {excpt}")
