@@ -1,0 +1,22 @@
+# Virtual environment
+venv/
+.venv/
+
+# Byte-code files
+*.pyc
+__pycache__/
+
+# Editor/OS temporary files
+.DS_Store
+Thumbs.db
+*.swp
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Local configuration/secrets (if applicable)
+.env
+.flaskenv
+config.local.json
