@@ -1,0 +1,3 @@
+New game started with 3 players.
+Player 1 flipped 12.
+Player 1 stays.
