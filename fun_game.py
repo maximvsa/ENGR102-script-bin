@@ -80,6 +80,7 @@ def main():
     print(deck)
     
     
+    
     round_number = 0
     game_state = "title screen"
     rules_visible = False
@@ -97,7 +98,27 @@ def main():
                         player1 = Player()
                         player2 = Player()
                         player3 = Player()
-                        round_number = 1
+                elif game_state == "between rounds":
+                    if event.key == pygame.K_SPACE:
+                        round_number += 1
+                        game_state = "player 1 turn"
+                elif game_state == "player 1 turn":
+                    if event.key == pygame.K_h:
+                        pass
+                    elif event.key == pygame.K_s:
+                        game_state = "player 2 turn"
+                elif game_state == "player 2 turn":
+                    if event.key == pygame.K_h:
+                        pass
+                    elif event.key == pygame.K_s:
+                        game_state = "player 3 turn"
+                elif game_state == "player 3 turn":
+                    if event.key == pygame.K_h:
+                        pass
+                    elif event.key == pygame.K_s:
+                        game_state = "between rounds"
+                
+                
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_r:
                     rules_visible = False
@@ -117,6 +138,15 @@ def main():
             screen.blit(player1_text_surface, player1_text_rect)
             screen.blit(player2_text_surface, player2_text_rect)
             screen.blit(player3_text_surface, player3_text_rect)
+        
+        if game_state == "player 1 turn":
+            pygame.draw.rect(screen, pastel_red, background_rect)
+            pygame.draw.rect(screen, (0, 0, 0), controls_background_rect)
+            screen.blit(controls_surface, controls_text_rect)
+            
+            screen.blit(player1_text_surface, player1_text_rect)
+            screen.blit(player2_text_surface, player2_text_rect)
+            screen.blit(player3_text_surface, player3_text_rect)
 
         if rules_visible:
             overlay_surface = pygame.Surface((rules_overlay_rect.width, rules_overlay_rect.height), pygame.SRCALPHA)
@@ -128,14 +158,16 @@ def main():
                 line_surface = rules_font.render(line, True, (255, 255, 255))
                 line_rect = line_surface.get_rect()
                 line_rect.centerx = overlay_surface.get_rect().width // 2
-                line_rect.y = 30
+                line_rect.y = text_y
                 overlay_surface.blit(line_surface, line_rect)
                 text_y += 60 if line.startswith("-") else 50
-
+            
             # Center the overlay each frame so it stays anchored even if the window changes later.
             overlay_dest = overlay_surface.get_rect()
             overlay_dest.center = (screen_width // 2, screen_height // 2)
             screen.blit(overlay_surface, overlay_dest)
+        
+        print(game_state)
         
         pygame.display.flip()
     
