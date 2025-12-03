@@ -48,7 +48,7 @@ def main():
     controls_surface = controls_font.render("[SPACE]-Continue  [H]-Hit  [S]-Stay  [TAB]-Scores  [R]-Rules", True, (255, 255, 255))
     controls_text_rect = controls_surface.get_rect()
     controls_text_rect.center = (screen_width // 2, screen_height - 20)
-
+    
     rules_overlay_rect = pygame.Rect(screen_width // 2 - 400, screen_height // 2 - 220, 800, 440)
     rules_lines = [
         "Flip 7 Overview",
