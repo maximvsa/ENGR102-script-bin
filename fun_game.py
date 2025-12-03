@@ -11,6 +11,7 @@
 # Date:         5 December 2025
 
 import pygame
+import random
 
 class Player:
     def __init__(self):
@@ -39,6 +40,8 @@ def main():
     controls_font = pygame.font.SysFont("LMAO", 50)
     player_text_font = pygame.font.SysFont("Helvetica", 50)
     rules_font = pygame.font.SysFont("Helvetica", 32)
+    deck_card_count_font = pygame.font.SysFont("Helvetica", 24)
+    card_font = pygame.font.SysFont("Helvetica", 32)
     
     title_surface = title_font.render("FLIP 7", True, (0, 0, 0))
     title_text_rect = title_surface.get_rect()
@@ -73,13 +76,61 @@ def main():
     player1_text_rect.bottomleft = (10, player2_text_rect.topleft[1] - 150)
     
     # Deck Composition
+    global deck
     deck = [0]
     for i in range(1, 13):
         for _ in range(i):
             deck.append(i)
-    print(deck)
+    deck.append("+2")
+    deck.append("+4")
+    deck.append("+6")
+    deck.append("+8")
+    deck.append("+10")
     
     
+    # Deck Rectangle for display in top right
+    deck_rect = pygame.Rect(screen_width - 150, 50, 100, 150)
+    deck_surface = pygame.Surface((deck_rect.width, deck_rect.height))
+    deck_surface.fill((200, 200, 200))
+    pygame.draw.rect(deck_surface, (0, 0, 0), deck_surface.get_rect(), 4)
+    
+    def draw_deck_info(target_surface):
+        target_surface.blit(deck_surface, deck_rect)
+        deck_card_count_surface = deck_card_count_font.render(f"Cards: {len(deck)}", True, (0, 0, 0))
+        deck_card_count_rect = deck_card_count_surface.get_rect()
+        deck_card_count_rect.center = (deck_rect.centerx, deck_rect.bottom + 20)
+        target_surface.blit(deck_card_count_surface, deck_card_count_rect)
+    
+    card_colors = {
+        "player1": (255, 255, 255),
+        "player2": (240, 240, 240),
+        "player3": (225, 225, 225),
+    }
+    card_width = 80
+    card_height = 120
+    card_spacing = 12
+    card_gap = 15
+    
+    def draw_player_hand(target_surface, player, label_rect, player_key):
+        if not player or not player.hand:
+            return
+        x = label_rect.left
+        y = label_rect.bottom + card_gap
+        for card in player.hand:
+            card_rect = pygame.Rect(x, y, card_width, card_height)
+            pygame.draw.rect(target_surface, card_colors[player_key], card_rect)
+            pygame.draw.rect(target_surface, (0, 0, 0), card_rect, 2)
+            value_surface = card_font.render(str(card), True, (0, 0, 0))
+            value_rect = value_surface.get_rect()
+            value_rect.center = card_rect.center
+            target_surface.blit(value_surface, value_rect)
+            x += card_width + card_spacing
+    
+    game_over = False
+    
+    player1 = None
+    player2 = None
+    player3 = None
     
     round_number = 0
     game_state = "title screen"
@@ -104,17 +155,17 @@ def main():
                         game_state = "player 1 turn"
                 elif game_state == "player 1 turn":
                     if event.key == pygame.K_h:
-                        pass
+                        player1.hand.append(deck.pop())
                     elif event.key == pygame.K_s:
                         game_state = "player 2 turn"
                 elif game_state == "player 2 turn":
                     if event.key == pygame.K_h:
-                        pass
+                        player2.hand.append(deck.pop())
                     elif event.key == pygame.K_s:
                         game_state = "player 3 turn"
                 elif game_state == "player 3 turn":
                     if event.key == pygame.K_h:
-                        pass
+                        player3.hand.append(deck.pop())
                     elif event.key == pygame.K_s:
                         game_state = "between rounds"
                 
@@ -138,6 +189,13 @@ def main():
             screen.blit(player1_text_surface, player1_text_rect)
             screen.blit(player2_text_surface, player2_text_rect)
             screen.blit(player3_text_surface, player3_text_rect)
+            draw_player_hand(screen, player1, player1_text_rect, "player1")
+            draw_player_hand(screen, player2, player2_text_rect, "player2")
+            draw_player_hand(screen, player3, player3_text_rect, "player3")
+            
+            draw_deck_info(screen)
+            
+            random.shuffle(deck)
         
         if game_state == "player 1 turn":
             pygame.draw.rect(screen, pastel_red, background_rect)
@@ -147,6 +205,13 @@ def main():
             screen.blit(player1_text_surface, player1_text_rect)
             screen.blit(player2_text_surface, player2_text_rect)
             screen.blit(player3_text_surface, player3_text_rect)
+            draw_player_hand(screen, player1, player1_text_rect, "player1")
+            draw_player_hand(screen, player2, player2_text_rect, "player2")
+            draw_player_hand(screen, player3, player3_text_rect, "player3")
+            
+            draw_deck_info(screen)
+            
+            
 
         if rules_visible:
             overlay_surface = pygame.Surface((rules_overlay_rect.width, rules_overlay_rect.height), pygame.SRCALPHA)
@@ -167,7 +232,26 @@ def main():
             overlay_dest.center = (screen_width // 2, screen_height // 2)
             screen.blit(overlay_surface, overlay_dest)
         
-        print(game_state)
+        if not game_over and player1 and player2 and player3:
+            if player1.score >= 200 or player2.score >= 200 or player3.score >= 200:
+                game_over = True
+        
+        if game_over:
+            
+            game_state = "game over"
+            # Determine winner
+            
+            scores = [player1.score, player2.score, player3.score]
+            max_score = max(scores)
+            winner = scores.index(max_score) + 1
+            
+            # Draw Game Over screen
+            pygame.draw.rect(screen, pastel_orange, background_rect)
+            game_over_font = pygame.font.SysFont("Helvetica", 150)
+            game_over_surface = game_over_font.render(f"GAME OVER. Player {winner} is the 67 chungus queen of Ohio", True, (0, 0, 0))
+            game_over_rect = game_over_surface.get_rect()
+            game_over_rect.center = (screen_width // 2, screen_height // 2)
+            screen.blit(game_over_surface, game_over_rect)
         
         pygame.display.flip()
     
