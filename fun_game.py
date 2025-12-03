@@ -61,6 +61,9 @@ def main():
     player2_text_rect.bottomleft = (10, player3_text_rect.topleft[1] - 150)
     player1_text_rect.bottomleft = (10, player2_text_rect.topleft[1] - 150)
     
+    
+    deck = []
+    
     round_number = 0
     game_state = "title screen"
     running = True
