@@ -10,11 +10,20 @@
 # Assignment:   Lab: Topic 13 (team)
 # Date:         5 December 2025
 
+"""Interactive FLIP 7 card game implemented with pygame.
+
+This script drives a three-player turn-based experience with overlays, scoring,
+and a stylized end screen declaring the winner once someone reaches 200 points.
+"""
+
 import pygame
 import random
 
 class Player:
+    """Lightweight data holder that tracks a single player's round state."""
+
     def __init__(self):
+        """Initialize bookkeeping fields for both round and lifetime scoring."""
         self.hand = []
         self.score = 0
         self.stayed = False
@@ -25,12 +34,13 @@ class Player:
         self.round_points_awarded = False
 
 def main():
+    """Spin up pygame, manage all game state, and drive the render loop."""
     pygame.init()
     pygame.font.init()
     
     screen_width = 1200
     screen_height = 900
-    
+        # Screen size is fixed because every asset has been eyeballed for this layout.
     pastel_yellow = (253, 253, 150)
     pastel_red = (255, 105, 97)
     pastel_blue = (174, 198, 207)
@@ -41,8 +51,8 @@ def main():
     pygame.display.set_caption("FLIP 7")
     
     background_rect = pygame.Rect(0, 0, screen_width, screen_height)
-    
     title_font = pygame.font.SysFont("Helvetica", 400)
+        # Fonts are centralized here so adjusting styles later is painless.
     controls_font = pygame.font.SysFont("LMAO", 50)
     player_text_font = pygame.font.SysFont("Helvetica", 50)
     rules_font = pygame.font.SysFont("Helvetica", 22)
@@ -58,10 +68,12 @@ def main():
     title_text_rect.center = (screen_width // 2, 200)
     
     controls_background_rect = pygame.Rect(0, screen_height - 40, screen_width, 40)
+        # Static overlay rectangles keep blitting logic tidy.
     controls_surface = controls_font.render("[SPACE]-Continue  [H]-Hit  [S]-Stay  [TAB]-Scores  [R]-Rules", True, (255, 255, 255))
     controls_text_rect = controls_surface.get_rect()
     controls_text_rect.center = (screen_width // 2, screen_height - 20)
     
+    # Overlay bounds were tuned so both rules and scoreboard can coexist.
     rules_overlay_rect = pygame.Rect(screen_width // 2 - 500, screen_height // 2 - 320, 1000, 640)
     rules_paragraphs = [
         "Flip 7: Full Table Rules",
@@ -95,6 +107,7 @@ def main():
     player1_text_rect.bottomleft = (10, player2_text_rect.topleft[1] - 150)
     
     def create_deck():
+        """Build a fresh deck whose distribution matches the Flip 7 rules."""
         new_deck = [0]
         for i in range(1, 13):
             for _ in range(i):
@@ -104,6 +117,8 @@ def main():
     
     deck = create_deck()
     random.shuffle(deck)
+    # Everything below this line assumes the deck reflects current state.
+    # Deck mutations always happen in-place so references remain valid.
     
     
     # Deck Rectangle for display in top right
@@ -113,6 +128,7 @@ def main():
     pygame.draw.rect(deck_surface, (0, 0, 0), deck_surface.get_rect(), 4)
     
     def draw_deck_info(target_surface):
+        """Render the card back plus the live deck count."""
         target_surface.blit(deck_surface, deck_rect)
         deck_card_count_surface = deck_card_count_font.render(f"Cards: {len(deck)}", True, (0, 0, 0))
         deck_card_count_rect = deck_card_count_surface.get_rect()
@@ -122,6 +138,7 @@ def main():
     hud_rect = pygame.Rect(screen_width // 2 - 180, 15, 360, 46)
     
     def draw_hud(target_surface, state_label, current_round):
+        """Show the current game state banner plus round counter."""
         pygame.draw.rect(target_surface, pastel_blue, hud_rect)
         pygame.draw.rect(target_surface, (0, 0, 0), hud_rect, 2)
         state_surface = info_font.render(state_label, True, (0, 0, 0))
@@ -144,6 +161,7 @@ def main():
     card_gap = 15
     
     def draw_player_hand(target_surface, player, label_rect, player_key):
+        """Draw a fan of card rectangles underneath the label for one player."""
         if not player or not player.hand:
             return
         x = label_rect.left
@@ -159,6 +177,7 @@ def main():
             x += card_width + card_spacing
     
     def wrap_text_lines(text_lines, font, max_width):
+        """Greedily wrap each supplied paragraph to the given pixel width."""
         wrapped = []
         for paragraph in text_lines:
             words = paragraph.split()
@@ -179,6 +198,7 @@ def main():
         return wrapped
     
     def draw_player_status(target_surface, player, label_rect):
+        """Display the most recent action description next to a player label."""
         if not player or not player.status_text:
             return
         status_surface = status_font.render(player.status_text, True, (0, 0, 0))
@@ -187,6 +207,7 @@ def main():
         target_surface.blit(status_surface, status_rect)
     
     def draw_rules_overlay(target_surface):
+        """Render the semi-transparent rules modal centered on the screen."""
         overlay_surface = pygame.Surface((rules_overlay_rect.width, rules_overlay_rect.height), pygame.SRCALPHA)
         overlay_surface.fill((0, 0, 0, 210))
         pygame.draw.rect(overlay_surface, (255, 255, 255), overlay_surface.get_rect(), 4)
@@ -210,6 +231,7 @@ def main():
         target_surface.blit(overlay_surface, overlay_dest)
     
     def draw_scoreboard_overlay(target_surface):
+        """Render live scores and statuses for each player."""
         overlay_surface = pygame.Surface((scoreboard_overlay_rect.width, scoreboard_overlay_rect.height), pygame.SRCALPHA)
         overlay_surface.fill((25, 25, 25, 230))
         pygame.draw.rect(overlay_surface, (255, 255, 255), overlay_surface.get_rect(), 4)
@@ -238,12 +260,14 @@ def main():
         overlay_dest.center = (screen_width // 2, screen_height // 2)
         target_surface.blit(overlay_surface, overlay_dest)
     
+    # Mutable list so helper functions can iterate across all contestants.
     players = []
     current_player_index = 0
     player_state_labels = ["player 1 turn", "player 2 turn", "player 3 turn"]
     game_over = False
     
     def set_current_player(index):
+        """Point the state machine at the requested player index."""
         nonlocal current_player_index, game_state
         current_player_index = index
         if players:
@@ -251,6 +275,7 @@ def main():
         game_state = player_state_labels[index]
     
     def reset_players_for_round():
+        """Clear per-round state so fresh cards can be dealt."""
         for player in players:
             player.hand.clear()
             player.stayed = False
@@ -261,6 +286,7 @@ def main():
             player.round_points_awarded = False
     
     def start_round():
+        """Shuffle a new deck, wipe round state, and pass the turn to Player 1."""
         nonlocal round_number, deck
         if not players:
             return
@@ -271,9 +297,11 @@ def main():
         set_current_player(0)
     
     def all_players_done():
+        """Return True when every player has either stayed or busted."""
         return players and all(p.stayed or p.busted for p in players)
     
     def advance_to_next_player():
+        """Move turn control to the next eligible player, or end the round."""
         nonlocal game_state, current_player_index, game_over
         if game_over:
             return
@@ -294,12 +322,14 @@ def main():
                 break
     
     def trigger_game_over():
+        """Freeze the game loop in a terminal state once someone wins."""
         nonlocal game_over, game_state
         if not game_over:
             game_over = True
             game_state = "game over"
     
     def check_game_over_condition():
+        """Check whether any player has met the 200-point win condition."""
         if game_over or not players:
             return
         for player in players:
@@ -308,6 +338,7 @@ def main():
                 break
     
     def handle_hit(player):
+        """Resolve a hit request for the current player, including bust logic."""
         if not player or player.hit_this_turn or player.stayed or player.busted:
             return
         if not deck:
@@ -325,6 +356,7 @@ def main():
         advance_to_next_player()
     
     def round_total(player):
+        """Sum the numeric value of every card currently in a hand."""
         total = 0
         for card in player.hand:
             if isinstance(card, int):
@@ -334,6 +366,7 @@ def main():
         return total
     
     def award_points_for_player(player):
+        """Permanently add a player's round total to their lifetime score."""
         if not player or player.round_points_awarded:
             return 0
         points = round_total(player)
@@ -343,6 +376,7 @@ def main():
         return points
     
     def handle_stay(player):
+        """Lock in a player's current total and advance the turn."""
         if not player or player.stayed or player.busted:
             return
         if not player.first_turn_completed:
@@ -360,14 +394,18 @@ def main():
     
     round_number = 0
     game_state = "title screen"
+    # Overlay toggles respond to key holds instead of toggles for instant feedback.
     rules_visible = False
     scoreboard_visible = False
     running = True
+    # Primary event loop: process inputs, update state, then render the scene.
     while running:
         for event in pygame.event.get():
+            # First handle OS-level quit events so we can bail gracefully.
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
+                # Keydown handlers flip booleans while KEYUP restores defaults.
                 if event.key == pygame.K_r:
                     rules_visible = True
                 if event.key == pygame.K_TAB:
@@ -399,7 +437,9 @@ def main():
                 if event.key == pygame.K_TAB:
                     scoreboard_visible = False
         
+        # Render pipeline is state-driven for readability.
         if game_state == "title screen":
+            # Splash screen shows branding plus control hints.
             pygame.draw.rect(screen, pastel_yellow, background_rect)
             pygame.draw.rect(screen, (0, 0, 0), controls_background_rect)
             screen.blit(controls_surface, controls_text_rect)
@@ -407,6 +447,7 @@ def main():
             screen.blit(title_surface, title_text_rect)
         
         if game_state == "between rounds":
+            # Staging area between rounds keeps everyone informed.
             pygame.draw.rect(screen, pastel_yellow, background_rect)
             pygame.draw.rect(screen, (0, 0, 0), controls_background_rect)
             screen.blit(controls_surface, controls_text_rect)
@@ -425,6 +466,7 @@ def main():
             draw_hud(screen, game_state.replace("_", " ").title(), round_number)
         
         if game_state == "player 1 turn":
+            # Each turn tint matches the player so you always know whose go it is.
             pygame.draw.rect(screen, pastel_red, background_rect)
             pygame.draw.rect(screen, (0, 0, 0), controls_background_rect)
             screen.blit(controls_surface, controls_text_rect)
@@ -480,12 +522,14 @@ def main():
             
             
 
+        # Overlays can stack; draw whichever keys are currently pressed.
         if rules_visible:
             draw_rules_overlay(screen)
         if scoreboard_visible:
             draw_scoreboard_overlay(screen)
         
         if not game_over and player1 and player2 and player3:
+            # Legacy check kept as an extra safety net in addition to helper.
             if player1.score >= 200 or player2.score >= 200 or player3.score >= 200:
                 game_over = True
         
