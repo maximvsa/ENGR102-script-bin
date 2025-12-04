@@ -19,6 +19,14 @@ and a stylized end screen declaring the winner once someone reaches 200 points.
 import pygame
 import random
 
+LOG_FILE = "flip7_game.log"
+
+
+def log_event(message):
+    """Append a plain log line to the session file."""
+    with open(LOG_FILE, "a", encoding="utf-8") as log:
+        log.write(f"{message}\n")
+
 class Player:
     """Lightweight data holder that tracks a single player's round state."""
 
@@ -35,6 +43,7 @@ class Player:
 
 def main():
     """Spin up pygame, manage all game state, and drive the render loop."""
+    log_event("Launching FLIP 7 session")
     pygame.init()
     pygame.font.init()
     
@@ -262,6 +271,12 @@ def main():
     
     # Mutable list so helper functions can iterate across all contestants.
     players = []
+
+    def player_label(player):
+        """Return a friendly label for a player instance."""
+        if player in players:
+            return f"Player {players.index(player) + 1}"
+        return "Unknown player"
     current_player_index = 0
     player_state_labels = ["player 1 turn", "player 2 turn", "player 3 turn"]
     game_over = False
@@ -295,6 +310,7 @@ def main():
         random.shuffle(deck)
         reset_players_for_round()
         set_current_player(0)
+        log_event(f"Round {round_number} started with fresh deck")
     
     def all_players_done():
         """Return True when every player has either stayed or busted."""
@@ -309,6 +325,7 @@ def main():
             return
         if all_players_done():
             game_state = "between rounds"
+            log_event("Round complete. Awaiting next deal")
             return
         start_idx = current_player_index
         while True:
@@ -319,6 +336,7 @@ def main():
                 break
             if current_player_index == start_idx:
                 game_state = "between rounds"
+                log_event("Round complete. Awaiting next deal")
                 break
     
     def trigger_game_over():
@@ -327,6 +345,10 @@ def main():
         if not game_over:
             game_over = True
             game_state = "game over"
+            if players:
+                scores = [player.score for player in players]
+                winner_idx = scores.index(max(scores))
+                log_event(f"Game over triggered. Player {winner_idx + 1} reached {scores[winner_idx]} points")
     
     def check_game_over_condition():
         """Check whether any player has met the 200-point win condition."""
@@ -343,14 +365,17 @@ def main():
             return
         if not deck:
             return
+        actor = player_label(player)
         new_card = deck.pop()
         already_have = new_card in player.hand
         player.hand.append(new_card)
         if already_have:
             player.busted = True
             player.status_text = f"Busted on {new_card}"
+            log_event(f"{actor} drew {new_card} and busted")
         else:
             player.status_text = f"Hit {new_card}"
+            log_event(f"{actor} hit and drew {new_card}")
         player.hit_this_turn = True
         player.first_turn_completed = True
         advance_to_next_player()
@@ -372,6 +397,7 @@ def main():
         points = round_total(player)
         player.score += points
         player.round_points_awarded = True
+        log_event(f"{player_label(player)} earned {points} points (total: {player.score})")
         check_game_over_condition()
         return points
     
@@ -385,6 +411,7 @@ def main():
         player.stayed = True
         current_total = round_total(player)
         player.status_text = f"Stayed - {current_total}"
+        log_event(f"{player_label(player)} stayed at {current_total}")
         award_points_for_player(player)
         advance_to_next_player()
     
@@ -418,6 +445,7 @@ def main():
                         player3 = Player()
                         players = [player1, player2, player3]
                         current_player_index = 0
+                        log_event("Players initialized. Waiting to start first round")
                 elif game_state == "between rounds":
                     if event.key == pygame.K_SPACE:
                         start_round()
